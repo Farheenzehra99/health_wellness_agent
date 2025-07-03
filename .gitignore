@@ -8,6 +8,7 @@ build/
 # Virtual environments
 .env
 .venv
+streamlit-env/
 
 # Local development
 *.log
