@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+
+# Distribution / packaging
+dist/
+build/
+
+# Virtual environments
+.env
+.venv
+
+# Local development
+*.log
+.DS_Store
+
+# Database
+*.db
+*.sqlite3
+
+# Environment variables
+.env
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Project specific
+*.pdf
+temp/
+logs/
+.env
