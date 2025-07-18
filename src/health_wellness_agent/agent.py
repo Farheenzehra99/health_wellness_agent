@@ -1,6 +1,7 @@
 from typing import Dict, List, Optional
 from pydantic import BaseModel
-from openai.agents import Agent, AgentResponse
+from openai.agents import Agent, AgentResponse, AgentState, Tool
+from openai.types import FunctionDefinition
 from .context import UserSessionContext
 from .tools import (
     GoalAnalyzerTool,
@@ -18,24 +19,41 @@ from .agents import (
 class HealthWellnessAgent(Agent):
     name = "health_wellness"
     description = "Main agent for health and wellness planning and coordination"
+    tools: List[Tool] = []
+    state: AgentState = AgentState()
 
     def __init__(self):
         super().__init__()
-        # Initialize tools
-        self.tools = {
-            'goal_analyzer': GoalAnalyzerTool(),
-            'meal_planner': MealPlannerTool(),
-            'workout_recommender': WorkoutRecommenderTool(),
-            'progress_tracker': ProgressTrackerTool(),
-            'checkin_scheduler': CheckinSchedulerTool()
-        }
+        self.tools = [
+            Tool(
+                function=FunctionDefinition(
+                    name="analyze_goal",
+                    description="Analyzes user health goals",
+                    parameters={
+                        "type": "object",
+                        "properties": {
+                            "goal_text": {"type": "string"},
+                            "timeframe": {"type": "string"}
+                        },
+                        "required": ["goal_text"]
+                    }
+                ),
+                callback=self.analyze_goal
+            ),
+            # Add other tools similarly
+        ]
+
+    async def handle_message(self, message: str, state: AgentState) -> AgentResponse:
+        # Update state with message history
+        state.add_message("user", message)
         
-        # Initialize specialized agents
-        self.specialized_agents = {
-            'nutrition': NutritionExpertAgent(),
-            'injury': InjurySupportAgent(),
-            'escalation': EscalationAgent()
-        }
+        # Process message and determine next action
+        response = await self.process_message(message, state)
+        
+        # Update state with response
+        state.add_message("assistant", response)
+        
+        return AgentResponse(response=response, state=state)
 
     async def handle_input(
         self,
